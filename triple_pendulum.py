@@ -9,10 +9,10 @@ m = 1
 kf = 1
 a = g/L
 b = kf/(m*L*L)
-q0 = 0
+q0 = [0, 1, 3]
 maxTime = 10
 t = 0
-jIdx = 1
+q0idx = 0
 
 if (IS_GUI):
     physicsClient = p.connect(p.GUI)
@@ -22,37 +22,44 @@ else:
 p.setGravity(0, 0, -g)
 bodyId = p.loadURDF("./triple_pendulum.urdf")
 
+jIdx = p.getNumJoints(bodyId)
 
-p.changeDynamics(bodyUniqueId=bodyId,
-                linkIndex=jIdx,
-                linearDamping=0)
+for i in range(jIdx):
+    joint_info = p.getJointInfo(bodyId, i)
+    if joint_info[2] is p.JOINT_REVOLUTE:
+        print("revolute ", i, " ", joint_info)
+        p.changeDynamics(bodyUniqueId=bodyId,
+                        linkIndex=i,
+                        linearDamping=0)
 
-p.setJointMotorControl2(bodyIndex = bodyId,
-                        jointIndex = jIdx,
-                        targetPosition = q0,
-                        controlMode = p.POSITION_CONTROL)
+        p.setJointMotorControl2(bodyIndex = bodyId,
+                                jointIndex = i,
+                                targetPosition = q0[q0idx],
+                                controlMode = p.POSITION_CONTROL)
+        q0idx += 1
+
 for _ in range(1000):
     p.stepSimulation()
 
-q0_fact = p.getJointState(bodyId, jIdx)[0]
-print(f'q0 error: {q0 - q0_fact}')
+q0_fact = p.getJointState(bodyId, 1)[0]
+print(f'q0 error: {q0[0] - q0_fact}')
 pos0 = [q0_fact, 0]
 
 log_time = [t]
 log_pos = [q0_fact]
 
 p.setJointMotorControl2(bodyIndex = bodyId,
-                        jointIndex = jIdx,
+                        jointIndex = 1,
                         controlMode = p.VELOCITY_CONTROL,
                         targetVelocity = 0,
                         force = 0)
 while t <= maxTime:
     p.stepSimulation()
-    pos = p.getJointState(bodyId, jIdx)[0]
+    pos = p.getJointState(bodyId, 1)[0]
     t += dt
 
     p.setJointMotorControl2(bodyIndex = bodyId,
-                        jointIndex = jIdx,
+                        jointIndex = 1,
                         controlMode = p.TORQUE_CONTROL,
                         force = 0.1)
 
