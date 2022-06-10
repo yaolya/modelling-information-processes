@@ -55,6 +55,8 @@ p.setJointMotorControlArray(bodyIndex = bodyId,
                         controlMode = p.VELOCITY_CONTROL,
                         targetVelocities = velocities,
                         forces = forces)
+
+forces[1] = 0.1
 while t <= maxTime:
     p.stepSimulation()
     pos = p.getJointState(bodyId, 1)[0]
